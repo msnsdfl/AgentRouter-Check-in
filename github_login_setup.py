@@ -27,9 +27,12 @@ def main() -> int:
         page.goto(f"{SITE}/login", wait_until="domcontentloaded", timeout=45000)
 
         print("请在打开的浏览器里点击“使用 GitHub 继续”，完成登录/授权。")
-        input("登录完成后，看到 AgentRouter 控制台后回到这里按 Enter 继续...")
+        print("脚本会自动等待你完成授权，最多 5 分钟。")
 
-        for _ in range(30):
+        deadline = time.time() + 300
+        has_user = False
+
+        while time.time() < deadline:
             try:
                 has_user = page.evaluate(
                     "() => Boolean(localStorage.getItem('user'))"
@@ -39,13 +42,6 @@ def main() -> int:
             except Exception:
                 pass
             time.sleep(1)
-
-        try:
-            has_user = page.evaluate(
-                "() => Boolean(localStorage.getItem('user'))"
-            )
-        except Exception:
-            has_user = False
 
         context.close()
 
