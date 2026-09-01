@@ -1480,11 +1480,13 @@ def browser_login_complete(
 
             # 不打印 URL、页面信息、异常内容
             result = None
+            log("登录失败: PlaywrightTimeoutError")
 
         except Exception:
 
             # 不打印异常
             result = None
+            log("登录失败: 通用异常")
 
         finally:
 
@@ -1557,6 +1559,7 @@ def checkin_account(
         )
 
         if proxy is None:
+            log("代理池未找到可用代理，尝试直连")
             break
 
         attempt = browser_login_complete(
@@ -1567,7 +1570,9 @@ def checkin_account(
         if attempt:
             return attempt
 
-    return None
+    log("代理池登录未成功，尝试直连")
+
+    return browser_login_complete(account)
 
 
 # ============================================================
