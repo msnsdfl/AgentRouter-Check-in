@@ -1050,6 +1050,8 @@ def browser_login_complete(
 
         page = context.new_page()
 
+        last_failure = "登录失败"
+
         try:
 
             # ------------------------------------------------
@@ -1106,6 +1108,7 @@ def browser_login_complete(
                 if not clicked:
 
                     # 不输出页面文本、HTML、URL
+                    last_failure = "登录表单未出现"
                     raise Exception(
                         "登录表单未出现"
                     )
@@ -1187,6 +1190,7 @@ def browser_login_complete(
                     "success"
                 ):
 
+                    last_failure = "登录表单未出现"
                     raise Exception(
                         "登录表单未出现"
                     )
@@ -1407,6 +1411,12 @@ def browser_login_complete(
                 "success"
             ):
 
+                last_failure = (
+                    "获取余额失败: "
+                    + str(api_result.get("error") or "")
+                    + " status="
+                    + str(api_result.get("status") or "")
+                )
                 raise Exception(
                     "获取余额失败"
                 )
@@ -1480,13 +1490,13 @@ def browser_login_complete(
 
             # 不打印 URL、页面信息、异常内容
             result = None
-            log("登录失败: PlaywrightTimeoutError")
+            log(f"登录失败: PlaywrightTimeoutError ({last_failure})")
 
         except Exception:
 
             # 不打印异常
             result = None
-            log("登录失败: 通用异常")
+            log(f"登录失败: {last_failure}")
 
         finally:
 
