@@ -33,6 +33,7 @@ TG_CHAT_ID = os.getenv("TG_CHAT_ID") or ""
 PROXY_SERVER = os.getenv("PROXY_SERVER") or ""
 PROXY_USERNAME = os.getenv("PROXY_USERNAME") or ""
 PROXY_PASSWORD = os.getenv("PROXY_PASSWORD") or ""
+BROWSER_CHANNEL = os.getenv("BROWSER_CHANNEL") or ""
 
 
 # ============================================================
@@ -914,6 +915,12 @@ def click_email_login_button(
             "Sign in with Email or Username"
         )
 
+        if target.count() == 0:
+            target = page.get_by_text("邮箱或用户名")
+
+        if target.count() == 0:
+            target = page.get_by_text("使用 邮箱或用户名 登录")
+
         target.first.wait_for(
             state="visible",
             timeout=timeout_ms,
@@ -956,6 +963,10 @@ def click_email_login_button(
                             ||
                             text ===
                             'Sign in with Email'
+                            ||
+                            text.includes(
+                                '邮箱或用户名'
+                            )
                         );
                     });
 
@@ -1026,6 +1037,8 @@ def browser_login_complete(
         browser = p.chromium.launch(
 
             headless=True,
+
+            channel=(BROWSER_CHANNEL or None),
 
             args=[
                 "--no-sandbox",
