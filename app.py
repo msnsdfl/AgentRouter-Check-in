@@ -1072,6 +1072,19 @@ def browser_login_complete(
                 timeout_ms=45000,
             )
 
+            already_logged_in = page.evaluate(
+                """() => {
+                    const userStr = localStorage.getItem('user');
+                    if (!userStr) return false;
+                    try {
+                        const user = JSON.parse(userStr);
+                        return Boolean(user && user.id);
+                    } catch (err) {
+                        return false;
+                    }
+                }"""
+            )
+
             # ------------------------------------------------
             # 检查页面是否有输入框
             # ------------------------------------------------
@@ -1084,7 +1097,7 @@ def browser_login_complete(
             # 没有输入框时切换登录方式
             # ------------------------------------------------
 
-            if has_inputs == 0:
+            if has_inputs == 0 and not already_logged_in:
 
                 clicked = click_email_login_button(
                     page
@@ -1105,7 +1118,13 @@ def browser_login_complete(
             # Step 3：等待表单
             # ------------------------------------------------
 
-            wait_result = page.evaluate(
+            if already_logged_in:
+
+                log("检测到已有登录态，直接读取余额")
+
+            else:
+
+                wait_result = page.evaluate(
                 """
                 async () => {
 
@@ -1164,101 +1183,101 @@ def browser_login_complete(
                 """
             )
 
-            if not wait_result.get(
-                "success"
-            ):
+                if not wait_result.get(
+                    "success"
+                ):
 
-                raise Exception(
-                    "登录表单未出现"
+                    raise Exception(
+                        "登录表单未出现"
+                    )
+
+                # ------------------------------------------------
+                # 填写用户名
+                # ------------------------------------------------
+
+                username_locator = page.locator(
+                    "input#username"
                 )
 
-            # ------------------------------------------------
-            # 填写用户名
-            # ------------------------------------------------
-
-            username_locator = page.locator(
-                "input#username"
-            )
-
-            username_locator.wait_for(
-                state="visible",
-                timeout=5000,
-            )
-
-            username_locator.click(
-                timeout=5000
-            )
-
-            username_locator.fill(
-                account["username"],
-                timeout=5000,
-            )
-
-            # ------------------------------------------------
-            # 填写密码
-            # ------------------------------------------------
-
-            password_locator = page.locator(
-                "input#password"
-            )
-
-            password_locator.wait_for(
-                state="visible",
-                timeout=5000,
-            )
-
-            password_locator.click(
-                timeout=5000
-            )
-
-            password_locator.fill(
-                account["password"],
-                timeout=5000,
-            )
-
-            page.wait_for_timeout(
-                1000
-            )
-
-            # ------------------------------------------------
-            # Step 4：提交
-            # ------------------------------------------------
-
-            submit_locator = page.locator(
-                'button[type="submit"]'
-            )
-
-            submit_locator.wait_for(
-                state="visible",
-                timeout=5000,
-            )
-
-            submit_locator.click(
-                timeout=5000
-            )
-
-            # ------------------------------------------------
-            # Step 5：等待登录
-            # ------------------------------------------------
-
-            page.wait_for_timeout(
-                3000
-            )
-
-            # 检查验证码
-            has_captcha = page.evaluate(
-                """
-                () => !!document.querySelector(
-                    '#nc_1_n1z, .nc-container, [class*="captcha"]'
+                username_locator.wait_for(
+                    state="visible",
+                    timeout=5000,
                 )
-                """
-            )
 
-            if has_captcha:
+                username_locator.click(
+                    timeout=5000
+                )
+
+                username_locator.fill(
+                    account["username"],
+                    timeout=5000,
+                )
+
+                # ------------------------------------------------
+                # 填写密码
+                # ------------------------------------------------
+
+                password_locator = page.locator(
+                    "input#password"
+                )
+
+                password_locator.wait_for(
+                    state="visible",
+                    timeout=5000,
+                )
+
+                password_locator.click(
+                    timeout=5000
+                )
+
+                password_locator.fill(
+                    account["password"],
+                    timeout=5000,
+                )
 
                 page.wait_for_timeout(
-                    5000
+                    1000
                 )
+
+                # ------------------------------------------------
+                # Step 4：提交
+                # ------------------------------------------------
+
+                submit_locator = page.locator(
+                    'button[type="submit"]'
+                )
+
+                submit_locator.wait_for(
+                    state="visible",
+                    timeout=5000,
+                )
+
+                submit_locator.click(
+                    timeout=5000
+                )
+
+                # ------------------------------------------------
+                # Step 5：等待登录
+                # ------------------------------------------------
+
+                page.wait_for_timeout(
+                    3000
+                )
+
+                # 检查验证码
+                has_captcha = page.evaluate(
+                    """
+                    () => !!document.querySelector(
+                        '#nc_1_n1z, .nc-container, [class*="captcha"]'
+                    )
+                    """
+                )
+
+                if has_captcha:
+
+                    page.wait_for_timeout(
+                        5000
+                    )
 
             # ------------------------------------------------
             # Step 6：获取用户信息
